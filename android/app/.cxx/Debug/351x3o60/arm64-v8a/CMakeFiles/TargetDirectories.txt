@@ -1,0 +1,2 @@
+C:/Users/pavan/StudioProjects/Flutter_Projects/Eventure/android/app/.cxx/Debug/351x3o60/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/pavan/StudioProjects/Flutter_Projects/Eventure/android/app/.cxx/Debug/351x3o60/arm64-v8a/CMakeFiles/rebuild_cache.dir
