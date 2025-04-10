@@ -4,15 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:iconsax/iconsax.dart';
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String description;
   final String location;
   final String status;
-  final VoidCallback onLike;
-  final VoidCallback onViewDetails;
   final bool isLiked;
+  final int likeCount;
+  final String eventId;
+  final VoidCallback onViewDetails;
+  final Function(bool) onLikeToggled;
 
   const EventCard({
     Key? key,
@@ -21,24 +23,80 @@ class EventCard extends StatelessWidget {
     required this.description,
     required this.location,
     required this.status,
-    required this.onLike,
     required this.onViewDetails,
-    this.isLiked = false,
+    required this.isLiked,
+    required this.likeCount,
+    required this.eventId,
+    required this.onLikeToggled,
   }) : super(key: key);
+
+  @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  late bool _isLiked;
+  late int _likeCount;
+  bool _isProcessingLike = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLiked = widget.isLiked;
+    _likeCount = widget.likeCount;
+  }
+
+  @override
+  void didUpdateWidget(EventCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isLiked != widget.isLiked ||
+        oldWidget.likeCount != widget.likeCount) {
+      setState(() {
+        _isLiked = widget.isLiked;
+        _likeCount = widget.likeCount;
+      });
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_isProcessingLike) return;
+
+    setState(() {
+      _isProcessingLike = true;
+      // Optimistic UI update
+      _isLiked = !_isLiked;
+      _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
+    });
+
+    try {
+      await widget.onLikeToggled(_isLiked);
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        _isLiked = !_isLiked;
+        _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update like status: $e')),
+      );
+    } finally {
+      setState(() {
+        _isProcessingLike = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = IDeviceUtils.getScreenWidth(context);
     final screenHeight = IDeviceUtils.getScreenHeight(context);
-
-    // Responsive padding calculations
     final contentPadding = screenWidth * 0.03;
 
     return Container(
       width: screenWidth * 0.9,
       height: screenHeight * 0.255,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: isDarkMode ? IColors.darkContainer : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -63,11 +121,11 @@ class EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image and event info
+            // Image and details row (unchanged)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Event image
+                // Image (unchanged)
                 Container(
                   width: screenWidth * 0.28,
                   height: screenWidth * 0.28,
@@ -83,7 +141,7 @@ class EventCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(11),
                     child: Image.network(
-                      imageUrl,
+                      widget.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: IColors.accent.withOpacity(0.2),
@@ -97,29 +155,29 @@ class EventCard extends StatelessWidget {
                         return Container(
                           color: IColors.accent.withOpacity(0.2),
                           child: const Center(
-                            child:
-                                SpinKitRotatingCircle(color: IColors.primary),
+                            child: SpinKitRotatingCircle(
+                              color: IColors.primary,
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 16),
-
-                // Event details
+                // Text content (unchanged)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
+                      // Title and status (unchanged)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
+                          SizedBox(
+                            width: screenWidth * 0.3,
                             child: Text(
-                              title,
+                              widget.title,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -130,39 +188,38 @@ class EventCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            width: screenWidth * 0.3,
                           ),
                           Container(
                             margin: const EdgeInsets.only(top: 4),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(status, isDarkMode)
+                              color: _getStatusColor(widget.status, isDarkMode)
                                   .withOpacity(isDarkMode ? 0.2 : 0.1),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: _getStatusColor(status, isDarkMode)
-                                    .withOpacity(0.5),
+                                color:
+                                    _getStatusColor(widget.status, isDarkMode)
+                                        .withOpacity(0.5),
                                 width: 1,
                               ),
                             ),
                             child: Text(
-                              status,
+                              widget.status,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: _getStatusColor(status, isDarkMode),
+                                color:
+                                    _getStatusColor(widget.status, isDarkMode),
                               ),
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Description
+                      // Description (unchanged)
                       Text(
-                        description,
+                        widget.description,
                         style: TextStyle(
                           fontSize: 14,
                           color: isDarkMode
@@ -172,23 +229,19 @@ class EventCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-
                       const SizedBox(height: 8),
-
-                      // Location
+                      // Location (unchanged)
                       Row(
                         children: [
                           Icon(
                             Icons.place_outlined,
                             size: 16,
-                            color: isDarkMode
-                                ? IColors.primary.withOpacity(0.9)
-                                : IColors.primary,
+                            color: IColors.primary,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              location,
+                              widget.location,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDarkMode
@@ -201,44 +254,53 @@ class EventCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 4),
-
-                      // Status badge
                     ],
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-            Divider(),
-
-            // Action buttons
+            const Divider(),
+            // Action buttons - UPDATED FOR LIKE COUNT
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Like button
+                // Like button with count
                 Row(
                   children: [
                     IconButton(
-                      icon: Icon(
-                        isLiked ? Iconsax.heart5 : Iconsax.heart,
-                        color: isLiked
-                            ? Colors.red
-                            : (isDarkMode
-                                ? IColors.textWhite
-                                : IColors.textPrimary),
-                        size: 24,
-                      ),
-                      onPressed: onLike,
+                      icon: _isProcessingLike
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: SpinKitPulse(
+                                color: Colors.red,
+                              ),
+                            )
+                          : Icon(
+                              _isLiked ? Iconsax.heart5 : Iconsax.heart,
+                              color: _isLiked
+                                  ? Colors.red
+                                  : (isDarkMode
+                                      ? IColors.textWhite
+                                      : IColors.textPrimary),
+                              size: 24,
+                            ),
+                      onPressed: _toggleLike,
                     ),
+                    const SizedBox(width: 4),
                     Text(
-                      "Like",
-                      style: TextStyle(fontSize: 16),
+                      '$_likeCount Likes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode
+                            ? IColors.textWhite.withOpacity(0.7)
+                            : IColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
+                // Share button (unchanged)
                 Row(
                   children: [
                     IconButton(
@@ -251,16 +313,12 @@ class EventCard extends StatelessWidget {
                       ),
                       onPressed: () {},
                     ),
-                    Text(
-                      "Share",
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    const Text("Share", style: TextStyle(fontSize: 16)),
                   ],
                 ),
-                // Details button
-                // Button styled like the "Upcoming" status chip
+                // Details button (unchanged)
                 ElevatedButton(
-                  onPressed: onViewDetails,
+                  onPressed: widget.onViewDetails,
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(
                       IColors.primary.withOpacity(0.1),
@@ -291,11 +349,9 @@ class EventCard extends StatelessWidget {
                   ),
                   child: const Text(
                     "Details",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
-                )
+                ),
               ],
             ),
           ],

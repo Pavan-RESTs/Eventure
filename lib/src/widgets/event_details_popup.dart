@@ -266,64 +266,6 @@ class EventDetailsPopup extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // Action buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                // Add "like" functionality here
-                              },
-                              icon: const Icon(Iconsax.heart),
-                              label: const Text("Like"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    isDark ? IColors.dark : Colors.white,
-                                foregroundColor: IColors.primary,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side:
-                                      const BorderSide(color: IColors.primary),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed:
-                                  event.status.toLowerCase() == "upcoming"
-                                      ? () {
-                                          // Add registration logic here
-                                        }
-                                      : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: IColors.primary,
-                                foregroundColor: IColors.grey,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                disabledBackgroundColor:
-                                    IColors.primary.withOpacity(0.4),
-                              ),
-                              child: Text(
-                                event.status.toLowerCase() == "upcoming"
-                                    ? "Register"
-                                    : event.status.toLowerCase() == "live"
-                                        ? "Join Now"
-                                        : "Completed",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -412,7 +354,7 @@ class EventDetailsPopup extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 color: isDark
-                    ? IColors.dark.withOpacity(0.5)
+                    ? IColors.primary.withOpacity(0.1)
                     : IColors.grey.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -420,7 +362,7 @@ class EventDetailsPopup extends StatelessWidget {
                 child: Text(
                   "No gallery images available",
                   style: TextStyle(
-                    color: IColors.darkerGrey,
+                    color: IColors.white,
                   ),
                 ),
               ),

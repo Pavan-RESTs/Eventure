@@ -334,7 +334,7 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
           'likes': 0,
           'start_timestamp': Timestamp.fromDate(_startDateTime!),
           'end_timestamp': Timestamp.fromDate(_endDateTime!),
-          'brochurImageUrl': brochurePath,
+          'brochureImageUrl': brochurePath,
           'galleryImageFolderUrl': []
         });
 

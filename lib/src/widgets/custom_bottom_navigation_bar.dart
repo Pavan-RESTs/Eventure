@@ -2,6 +2,7 @@ import 'package:eventure/core/constants/colors.dart';
 import 'package:eventure/core/helpers/device_utility.dart';
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -27,7 +28,7 @@ class CustomBottomNavBar extends StatelessWidget {
         FlashyTabBarItem(
           activeColor: IColors.primary,
           icon: Icon(
-            Icons.event,
+            Iconsax.calendar_search,
             color: IColors.primary,
             size: screenWidth * 0.07,
           ),
@@ -43,7 +44,7 @@ class CustomBottomNavBar extends StatelessWidget {
         FlashyTabBarItem(
           activeColor: IColors.primary,
           icon: Icon(
-            Icons.edit_calendar_rounded,
+            Iconsax.calendar_edit,
             color: IColors.primary,
             size: screenWidth * 0.07,
           ),
@@ -59,7 +60,7 @@ class CustomBottomNavBar extends StatelessWidget {
         FlashyTabBarItem(
           activeColor: IColors.primary,
           icon: Icon(
-            Icons.place_outlined,
+            Iconsax.location,
             color: IColors.primary,
             size: screenWidth * 0.07,
           ),

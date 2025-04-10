@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/core/constants/colors.dart';
 import 'package:eventure/core/helpers/device_utility.dart';
 import 'package:eventure/src/functions/cloud_helper_functions.dart';
@@ -35,7 +36,7 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
         },
         backgroundColor: IColors.primary,
         child: Icon(
-          Icons.event_available_rounded,
+          Iconsax.calendar_add,
           color: IColors.grey,
         ),
       ),
@@ -67,109 +68,150 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
             final events = snapshot.data!;
 
             return SearchableList<EventModel>(
-              searchTextController: searchTextController,
-              displayClearIcon: false,
-              displaySearchIcon: false,
-              searchFieldPadding: const EdgeInsets.fromLTRB(0, 16, 0, 10),
-              initialList: events,
-              filter: (query) => events
-                  .where((event) =>
-                      event.name.toLowerCase().contains(query.toLowerCase()) ||
-                      event.description
-                          .toLowerCase()
-                          .contains(query.toLowerCase()) ||
-                      event.venue.toLowerCase().contains(query.toLowerCase()) ||
-                      event.status.toLowerCase().contains(query.toLowerCase()))
-                  .toList(),
-              emptyWidget: _buildEmptyWidget(),
-              onRefresh: () async {
-                await Future.delayed(const Duration(milliseconds: 800));
-                setState(() {});
-              },
-              inputDecoration: InputDecoration(
-                hintText: "Search events, locations...",
-                hintStyle: TextStyle(
-                  color: isDark ? IColors.grey : IColors.darkGrey,
-                  fontSize: 15,
-                ),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(
-                    Iconsax.search_normal_1,
-                    color: IColors.primary,
-                    size: 22,
+                searchTextController: searchTextController,
+                displayClearIcon: false,
+                displaySearchIcon: false,
+                searchFieldPadding: const EdgeInsets.fromLTRB(0, 16, 0, 10),
+                initialList: events,
+                filter: (query) => events
+                    .where((event) =>
+                        event.name
+                            .toLowerCase()
+                            .contains(query.toLowerCase()) ||
+                        event.description
+                            .toLowerCase()
+                            .contains(query.toLowerCase()) ||
+                        event.venue
+                            .toLowerCase()
+                            .contains(query.toLowerCase()) ||
+                        event.status
+                            .toLowerCase()
+                            .contains(query.toLowerCase()))
+                    .toList(),
+                emptyWidget: _buildEmptyWidget(),
+                onRefresh: () async {
+                  await Future.delayed(const Duration(milliseconds: 800));
+                  setState(() {});
+                },
+                inputDecoration: InputDecoration(
+                  hintText: "Search events, locations...",
+                  hintStyle: TextStyle(
+                    color: isDark ? IColors.grey : IColors.darkGrey,
+                    fontSize: 15,
+                  ),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Icon(
+                      Iconsax.search_normal_1,
+                      color: IColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      searchTextController.clear();
+                    },
+                    icon: const Icon(
+                      Icons.close,
+                      color: IColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: isDark ? IColors.darkContainer : Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: IColors.primary,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: IColors.primary,
+                      width: 1,
+                    ),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: IColors.grey,
+                      width: 1,
+                    ),
                   ),
                 ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    searchTextController.clear();
-                  },
-                  icon: const Icon(
-                    Icons.close,
-                    color: IColors.primary,
-                    size: 22,
-                  ),
+                cursorColor: IColors.primary,
+                textStyle: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                  fontSize: 14,
                 ),
-                filled: true,
-                fillColor: isDark ? IColors.darkContainer : Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: IColors.primary,
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: IColors.primary,
-                    width: 1,
-                  ),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: IColors.grey,
-                    width: 1,
-                  ),
-                ),
-              ),
-              cursorColor: IColors.primary,
-              textStyle: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontSize: 14,
-              ),
-              searchFieldHeight: 50,
-              closeKeyboardWhenScrolling: true,
-              itemBuilder: (event) {
-                return FutureBuilder<String>(
-                  future: ICloudHelperFunctions.getPublicBrochureUrl(
-                      event.brochureImageUrl),
-                  builder: (context, snapshot) {
-                    final imageUrl = snapshot.data ?? '';
-                    print("Image URL: $imageUrl");
+                searchFieldHeight: 50,
+                closeKeyboardWhenScrolling: true,
+                // In your itemBuilder within EventManagementScreen:
+                itemBuilder: (event) {
+                  return FutureBuilder<String>(
+                    future: ICloudHelperFunctions.getPublicBrochureUrl(
+                        event.brochureImageUrl),
+                    builder: (context, imageSnapshot) {
+                      return FutureBuilder<String?>(
+                        future: ICloudHelperFunctions.getUserId(),
+                        builder: (context, userIdSnapshot) {
+                          return FutureBuilder<bool>(
+                            future: ICloudHelperFunctions.hasUserLikedEvent(
+                                userIdSnapshot.data ?? '', event.event_id),
+                            builder: (context, likeSnapshot) {
+                              return EventCard(
+                                imageUrl: imageSnapshot.data ?? '',
+                                title: event.name,
+                                description: event.description,
+                                likeCount: event.likes,
+                                location: event.venue,
+                                status: event.status,
+                                isLiked: likeSnapshot.data ?? false,
+                                eventId: event.event_id,
+                                onViewDetails: () {
+                                  showEventDetailsPopup(
+                                      context, event, imageSnapshot.data ?? '');
+                                },
+                                onLikeToggled: (isLiked) async {
+                                  try {
+                                    final userId = userIdSnapshot.data;
+                                    if (userId == null) return;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 0),
-                      child: EventCard(
-                        imageUrl: imageUrl,
-                        title: event.name,
-                        description: event.description,
-                        location: event.venue,
-                        status: event.status,
-                        isLiked: false,
-                        onLike: () {},
-                        onViewDetails: () {
-                          showEventDetailsPopup(context, event, imageUrl);
+                                    final userRef = FirebaseFirestore.instance
+                                        .collection('User Table')
+                                        .doc(userId);
+
+                                    if (isLiked) {
+                                      ICloudHelperFunctions.updateEventLikes(
+                                          event.event_id, true);
+                                      await userRef.update({
+                                        'liked_events': FieldValue.arrayUnion(
+                                            [event.event_id])
+                                      });
+                                    } else {
+                                      ICloudHelperFunctions.updateEventLikes(
+                                          event.event_id, false);
+                                      await userRef.update({
+                                        'liked_events': FieldValue.arrayRemove(
+                                            [event.event_id])
+                                      });
+                                    }
+                                  } catch (e) {
+                                    throw e; // This will trigger the error handling in EventCard
+                                  }
+                                },
+                              );
+                            },
+                          );
                         },
-                      ),
-                    );
-                  },
-                );
-              },
-            );
+                      );
+                    },
+                  );
+                });
           },
         ),
       ),

@@ -70,4 +70,74 @@ class ICloudHelperFunctions {
       return null;
     }
   }
+
+  static Future<bool> hasUserLikedEvent(String userId, String eventId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('User Table')
+          .doc(userId)
+          .get();
+
+      print("UserDoc Exists: ${userDoc.exists}");
+      print("User Data: ${userDoc.data()}");
+
+      if (!userDoc.exists) return false;
+
+      final likedEventsRaw = userDoc.data()?['liked_events'];
+      print("Raw liked_events: $likedEventsRaw");
+
+      final likedEvents = List<String>.from(likedEventsRaw ?? []);
+      print("Parsed liked_events: $likedEvents");
+      print("Checking if likedEvents contains eventId: '$eventId'");
+      for (var id in likedEvents) {
+        if (id == eventId) {
+          print("YUess");
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print('Error checking liked event: $e');
+      return false;
+    }
+  }
+
+  static Future<void> updateEventLikes(String eventId, bool increment) async {
+    if (eventId.isEmpty) {
+      throw ArgumentError('Event ID cannot be empty');
+    }
+
+    try {
+      final eventRef =
+          FirebaseFirestore.instance.collection('Event Table').doc(eventId);
+
+      // Verify document exists first
+      final doc = await eventRef.get();
+      if (!doc.exists) {
+        throw Exception('Event document does not exist');
+      }
+
+      // Get current like count to prevent negative values
+      final currentLikes = (doc.data()?['likes'] as int?) ?? 0;
+      if (!increment && currentLikes <= 0) {
+        print('Like count already at minimum (0)');
+        return;
+      }
+
+      // Perform the update
+      await eventRef.update({
+        'likes': increment ? FieldValue.increment(1) : FieldValue.increment(-1)
+      });
+
+      print(
+          'Successfully ${increment ? 'incremented' : 'decremented'} likes for event $eventId');
+    } on FirebaseException catch (e) {
+      print('Firestore error updating likes: ${e.code} - ${e.message}');
+      throw Exception('Failed to update likes: ${e.message}');
+    } catch (e) {
+      print('Unexpected error updating likes: $e');
+      throw Exception('Failed to update likes: $e');
+    }
+  }
 }

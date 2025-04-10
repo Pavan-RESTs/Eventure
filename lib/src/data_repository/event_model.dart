@@ -47,7 +47,7 @@ class EventModel {
       likes: data['likes'] ?? 0,
       start_timestamp: (data['start_timestamp'] as Timestamp).toDate(),
       end_timestamp: (data['end_timestamp'] as Timestamp).toDate(),
-      brochureImageUrl: data['brochurImageUrl'] ?? '',
+      brochureImageUrl: data['brochureImageUrl'] ?? '',
       galleryImageUrls: data['galleryImageFolderUrl'] ?? '',
     );
   }

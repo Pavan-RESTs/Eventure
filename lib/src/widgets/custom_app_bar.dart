@@ -1,10 +1,7 @@
 import 'package:eventure/core/constants/colors.dart';
-import 'package:eventure/src/screens/login_screen.dart';
+import 'package:eventure/src/functions/page_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
@@ -65,8 +62,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               size: 25,
             ),
             onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-              Get.offAll(LoginScreen());
+              InputPageFunctions.showLogoutConfirmationDialog(context);
             },
           ),
           const SizedBox(width: 8),
