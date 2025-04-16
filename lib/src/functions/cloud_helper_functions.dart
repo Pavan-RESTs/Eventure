@@ -17,14 +17,16 @@ class ICloudHelperFunctions {
         password: password,
       );
 
-      IDeviceUtils.showSnackBar("Success", "Login Successful");
+      IDeviceUtils.showSnackBar(
+          "Success", "Login Successful", const Duration(seconds: 2));
 
       Get.offAll(const BottomNavigationScreen());
       return response;
     } on AuthException catch (e) {
-      IDeviceUtils.showSnackBar("Error", e.message);
+      IDeviceUtils.showSnackBar("Error", e.message, const Duration(seconds: 2));
     } catch (e) {
-      IDeviceUtils.showSnackBar("Error", "Something went wrong");
+      IDeviceUtils.showSnackBar(
+          "Error", "Something went wrong", const Duration(seconds: 2));
     }
 
     return null;

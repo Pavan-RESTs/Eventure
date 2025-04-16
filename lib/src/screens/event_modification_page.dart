@@ -466,7 +466,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                 Row(
                   children: [
                     const Icon(
-                      Iconsax.heart,
+                      Iconsax.heart5,
                       size: 16,
                       color: Colors.red,
                     ),
@@ -1058,9 +1058,11 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
             .doc(eventId)
             .update({'status': 'cancelled', 'eventCancelled': true});
 
-        IDeviceUtils.showSnackBar("Success", "Event cancelled successfully");
+        IDeviceUtils.showSnackBar("Success", "Event cancelled successfully",
+            const Duration(seconds: 2));
       } catch (e) {
-        IDeviceUtils.showSnackBar("Failure", "Failed to cancel event");
+        IDeviceUtils.showSnackBar(
+            "Failure", "Failed to cancel event", const Duration(seconds: 2));
       } finally {
         setState(() {
           _isLoading = false;
@@ -1109,9 +1111,10 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
           .delete();
 
       IDeviceUtils.showSnackBar(
-          "Success", "Event and files deleted successfully");
+          "Success", "Event deleted successfully", const Duration(seconds: 2));
     } catch (e) {
-      IDeviceUtils.showSnackBar("Failure", "Failed to delete event");
+      IDeviceUtils.showSnackBar(
+          "Failure", "Failed to delete event", const Duration(seconds: 2));
     } finally {
       setState(() {
         _isLoading = false;
@@ -1144,7 +1147,9 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
       final remainingSlots = _maxGalleryImages - currentImageCount;
       if (pickedFiles.length > remainingSlots) {
         IDeviceUtils.showSnackBar(
-            "Failure", "You can only upload $remainingSlots more images.");
+            "Failure",
+            "You can only upload $remainingSlots more images.",
+            const Duration(seconds: 2));
         return;
         // Show warning if user tries to upload more than allowed
       }
@@ -1205,10 +1210,13 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
       }
 
       // Show success message
-      IDeviceUtils.showSnackBar("Success",
-          "Successfully uploaded ${filesToUpload.length} images to gallery");
+      IDeviceUtils.showSnackBar(
+          "Success",
+          "Successfully uploaded ${filesToUpload.length} images to gallery",
+          const Duration(seconds: 2));
     } catch (e) {
-      IDeviceUtils.showSnackBar("Failure", "Failed to upload images");
+      IDeviceUtils.showSnackBar(
+          "Failure", "Failed to upload images", const Duration(seconds: 2));
     } finally {
       setState(() {
         _isLoading = false;
@@ -1252,11 +1260,13 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
         transaction.update(eventRef, {'galleryImageFolderUrl': galleryList});
       });
 
-      IDeviceUtils.showSnackBar("Success", "Image deleted successfully");
+      IDeviceUtils.showSnackBar(
+          "Success", "Image deleted successfully", const Duration(seconds: 2));
 
       setState(() {});
     } catch (e) {
-      IDeviceUtils.showSnackBar("Failure", "Failed to delete image");
+      IDeviceUtils.showSnackBar(
+          "Failure", "Failed to delete image", const Duration(seconds: 2));
     } finally {
       setState(() {
         _isLoading = false;

@@ -64,7 +64,10 @@ class InputPageFunctions {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await Supabase.instance.client.auth.signOut();
+                        Get.offAll(const LoginScreen());
+                      },
                       icon: Icon(
                         Icons.close,
                         color: Colors.grey[600],

@@ -175,6 +175,60 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
     }
   }
 
+  Future<bool> _checkForEventOverlaps() async {
+    if (_startDateTime == null ||
+        _endDateTime == null ||
+        _selectedVenueId == null) {
+      return false;
+    }
+
+    try {
+      // Query events at the same venue that might overlap
+      final QuerySnapshot eventsSnapshot = await FirebaseFirestore.instance
+          .collection('Event Table')
+          .where('venue_id', isEqualTo: _selectedVenueId)
+          .get();
+
+      // Check each event for time overlap
+      for (var doc in eventsSnapshot.docs) {
+        final eventData = doc.data() as Map<String, dynamic>;
+
+        // Get the start and end times of existing events
+        final existingStartTime =
+            (eventData['start_timestamp'] as Timestamp).toDate();
+        final existingEndTime =
+            (eventData['end_timestamp'] as Timestamp).toDate();
+
+        // Check for overlap
+        // Overlap occurs when:
+        // - New event starts during an existing event, OR
+        // - New event ends during an existing event, OR
+        // - New event completely encompasses an existing event
+        if ((_startDateTime!.isAfter(existingStartTime) &&
+                _startDateTime!.isBefore(existingEndTime)) ||
+            (_endDateTime!.isAfter(existingStartTime) &&
+                _endDateTime!.isBefore(existingEndTime)) ||
+            (_startDateTime!.isBefore(existingStartTime) &&
+                _endDateTime!.isAfter(existingEndTime))) {
+          // Format the conflicting event times for display
+          final dateFormatter = DateFormat('MMM dd, yyyy');
+          final timeFormatter = DateFormat('hh:mm a');
+          final existingEventName = eventData['name'];
+          final conflictMessage =
+              'Conflicts with "${existingEventName}" on ${dateFormatter.format(existingStartTime)} from ${dateFormatter.format(existingStartTime)} ${timeFormatter.format(existingStartTime)} to ${dateFormatter.format(existingEndTime)} ${timeFormatter.format(existingEndTime)}';
+
+          IDeviceUtils.showSnackBar(
+              'Time Conflict', conflictMessage, const Duration(seconds: 6));
+          return true;
+        }
+      }
+
+      return false; // No overlaps found
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _selectEndDateTime(BuildContext context) async {
     final bool isDark = IDeviceUtils.isDarkMode(context);
 
@@ -275,35 +329,46 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
   Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
       if (_brochureImage == null) {
-        IDeviceUtils.showSnackBar('Error', 'Please select a brochure image');
+        IDeviceUtils.showSnackBar('Error', 'Please select a brochure image',
+            const Duration(seconds: 2));
         return;
       }
 
       if (_startDateTime == null) {
-        IDeviceUtils.showSnackBar(
-            'Error', 'Please select a start date and time');
+        IDeviceUtils.showSnackBar('Error',
+            'Please select a start date and time', const Duration(seconds: 2));
         return;
       }
 
       if (_endDateTime == null) {
-        IDeviceUtils.showSnackBar(
-            'Error', 'Please select an end date and time');
+        IDeviceUtils.showSnackBar('Error', 'Please select an end date and time',
+            const Duration(seconds: 2));
         return;
       }
 
       if (_selectedDepartmentId == null) {
-        IDeviceUtils.showSnackBar('Error', 'Please select a department');
+        IDeviceUtils.showSnackBar(
+            'Error', 'Please select a department', const Duration(seconds: 2));
         return;
       }
 
       if (_selectedVenueId == null) {
-        IDeviceUtils.showSnackBar('Error', 'Please select a venue');
+        IDeviceUtils.showSnackBar(
+            'Error', 'Please select a venue', const Duration(seconds: 2));
         return;
       }
-
       setState(() {
         _isLoading = true;
       });
+      // Check for event time overlaps
+      bool hasOverlaps = await _checkForEventOverlaps();
+      if (hasOverlaps) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        return;
+      }
 
       try {
         // Generate event ID
@@ -328,7 +393,7 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
             .from('event-bucket')
             .uploadBinary(
               galleryPlaceholderPath,
-              Uint8List.fromList([]), // Empty file content
+              Uint8List.fromList([]),
               fileOptions:
                   const FileOptions(cacheControl: '3600', upsert: false),
             );
@@ -353,11 +418,13 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
 
         // Create folder for gallery images (even if empty for now)
 
-        IDeviceUtils.showSnackBar('Success', 'Event created successfully');
+        IDeviceUtils.showSnackBar('Success', 'Event created successfully',
+            const Duration(seconds: 2));
         widget.onEventCreated();
         Navigator.of(context).pop();
       } catch (e) {
-        IDeviceUtils.showSnackBar('Error', 'Failed to create event: $e');
+        IDeviceUtils.showSnackBar(
+            'Error', 'Failed to create event: $e', const Duration(seconds: 2));
       } finally {
         setState(() {
           _isLoading = false;

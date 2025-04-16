@@ -110,15 +110,15 @@ class IDeviceUtils {
     return Platform.isAndroid;
   }
 
-  static void showSnackBar(String context, String message) {
+  static void showSnackBar(String context, String message, Duration? duration) {
     Get.snackbar(
-      duration: Duration(seconds: 2),
-      backgroundColor: Color(0xB3070707),
-      colorText: Colors.white,
       context,
       message,
+      duration: duration ?? const Duration(seconds: 2),
+      backgroundColor: const Color(0xB3070707),
+      colorText: Colors.white,
+      margin: const EdgeInsets.only(bottom: 10, left: 10, right: 10),
       snackPosition: SnackPosition.BOTTOM,
-      margin: EdgeInsets.only(bottom: 10, left: 10, right: 10), //
     );
   }
 

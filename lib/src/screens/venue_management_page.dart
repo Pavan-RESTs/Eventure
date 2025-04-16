@@ -6,7 +6,6 @@ import 'package:eventure/core/helpers/device_utility.dart';
 import 'package:eventure/src/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:iconsax/iconsax.dart';
 
 class VenueModel {
@@ -42,14 +41,6 @@ class VenueExplorationScreen extends StatefulWidget {
 
 class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
   TextEditingController searchTextController = TextEditingController();
-  String selectedCategory = 'All';
-  final List<String> categories = [
-    'All',
-    'Indoor',
-    'Outdoor',
-    'Conference',
-    'Wedding'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -64,166 +55,138 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
           setState(() {});
         },
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchBar(isDark),
-            const SizedBox(height: 16),
-            _buildCategoryChips(),
-            const SizedBox(height: 16),
-            Text(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSearchBar(isDark),
+          const SizedBox(height: 16),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+            child: Text(
               "Featured Venues",
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('Venue Table')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: SpinKitWaveSpinner(
-                        size: 90,
-                        waveColor: Colors.lightBlueAccent,
-                        color: IColors.primary,
-                      ),
-                    );
-                  }
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('Venue Table')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: SpinKitWaveSpinner(
+                      size: 90,
+                      waveColor: Colors.lightBlueAccent,
+                      color: IColors.primary,
+                    ),
+                  );
+                }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return _buildEmptyWidget();
-                  }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return _buildEmptyWidget();
+                }
 
-                  final venues = snapshot.data!.docs
-                      .map((doc) => VenueModel.fromFirestore(doc))
-                      .toList();
+                final venues = snapshot.data!.docs
+                    .map((doc) => VenueModel.fromFirestore(doc))
+                    .toList();
 
-                  // Filter by category if not "All"
-                  List<VenueModel> filteredVenues = selectedCategory == 'All'
-                      ? venues
-                      : venues.where((venue) =>
-                          // This is a placeholder. In a real app, you'd have a category field in your venue model
-                          true).toList();
-
-                  return _buildVenueGrid(filteredVenues, isDark);
-                },
-              ),
+                return _buildVenueList(venues, isDark);
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSearchBar(bool isDark) {
-    return TextField(
-      controller: searchTextController,
-      onChanged: (value) {
-        setState(() {});
-      },
-      style: TextStyle(
-        color: isDark ? Colors.white : Colors.black,
-        fontSize: 14,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      decoration: BoxDecoration(
+        color: isDark ? IColors.darkContainer : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      decoration: InputDecoration(
-        hintText: "Search venues...",
-        hintStyle: TextStyle(
-          color: isDark ? IColors.grey : IColors.darkGrey,
-          fontSize: 15,
-        ),
-        prefixIcon: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Icon(
-            Iconsax.search_normal_1,
-            color: IColors.primary,
-            size: 22,
-          ),
-        ),
-        suffixIcon: IconButton(
-          onPressed: () {
-            searchTextController.clear();
-            setState(() {});
-          },
-          icon: const Icon(
-            Icons.close,
-            color: IColors.primary,
-            size: 22,
-          ),
-        ),
-        filled: true,
-        fillColor: isDark ? IColors.darkContainer : Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: IColors.primary,
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: IColors.primary,
-            width: 1,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: IColors.grey,
-            width: 1,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChips() {
-    return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = selectedCategory == category;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              selected: isSelected,
-              showCheckmark: false,
-              label: Text(category),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : IColors.primary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              backgroundColor: Colors.transparent,
-              shape: const StadiumBorder(
-                side: BorderSide(color: IColors.primary),
-              ),
-              selectedColor: IColors.primary,
-              onSelected: (selected) {
-                setState(() {
-                  selectedCategory = category;
-                });
-              },
-            ),
-          );
+      child: TextField(
+        controller: searchTextController,
+        onChanged: (value) {
+          setState(() {});
         },
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          hintText: "Find your perfect venue...",
+          hintStyle: TextStyle(
+            color: isDark ? IColors.grey : IColors.darkGrey,
+            fontSize: 16,
+          ),
+          prefixIcon: Container(
+            padding: const EdgeInsets.all(14),
+            child: const Icon(
+              Iconsax.search_normal_1,
+              color: IColors.primary,
+              size: 24,
+            ),
+          ),
+          suffixIcon: searchTextController.text.isNotEmpty
+              ? IconButton(
+                  onPressed: () {
+                    searchTextController.clear();
+                    setState(() {});
+                  },
+                  icon: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: IColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: IColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                )
+              : null,
+          filled: true,
+          fillColor: isDark ? IColors.darkContainer : Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(
+              color: IColors.primary,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildVenueGrid(List<VenueModel> venues, bool isDark) {
+  Widget _buildVenueList(List<VenueModel> venues, bool isDark) {
     // Filter venues based on search text
     final filteredVenues = searchTextController.text.isEmpty
         ? venues
@@ -241,35 +204,27 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
       return _buildEmptyWidget();
     }
 
-    return MasonryGridView.count(
-      crossAxisCount: 2,
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: filteredVenues.length,
       itemBuilder: (context, index) {
         final venue = filteredVenues[index];
-
-        // Get the first image as thumbnail
-        String thumbnailUrl = "";
-        if (venue.images.isNotEmpty) {
-          thumbnailUrl =
-              "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/venue-bucket/${venue.venueId}/${venue.images[0]}";
-        }
 
         return GestureDetector(
           onTap: () {
             _showVenueDetailsDialog(context, venue, isDark);
           },
           child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               color: isDark ? IColors.darkContainer : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  spreadRadius: 1,
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  color: Colors.black.withOpacity(0.08),
+                  spreadRadius: 0,
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -278,84 +233,93 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
               children: [
                 ClipRRect(
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: thumbnailUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: thumbnailUrl,
-                          height: index % 3 == 0
-                              ? 180
-                              : 140, // Varied heights for visual interest
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: IColors.lightGrey,
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                color: IColors.primary,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: IColors.lightGrey,
-                            child: const Icon(
-                              Icons.image_not_supported,
-                              color: IColors.primary,
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: index % 3 == 0 ? 180 : 140,
-                          color: IColors.lightGrey,
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              color: IColors.primary,
-                            ),
-                          ),
-                        ),
+                      const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: _buildVenueImage(venue),
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        venue.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              venue.name,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: IColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Iconsax.gallery,
+                                  size: 14,
+                                  color: IColors.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "${venue.images.length} photos",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: IColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
                         venue.description,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: isDark ? IColors.grey : IColors.darkGrey,
+                          height: 1.4,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Iconsax.gallery,
-                            size: 14,
-                            color: IColors.primary,
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          _showVenueDetailsDialog(context, venue, isDark);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: IColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "${venue.images.length} photos",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: IColors.primary,
-                            ),
+                          minimumSize: const Size(double.infinity, 46),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          "View Details",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -368,6 +332,66 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
     );
   }
 
+  Widget _buildVenueImage(VenueModel venue) {
+    // Get the first image as thumbnail
+    String thumbnailUrl = "";
+    if (venue.images.isNotEmpty) {
+      thumbnailUrl =
+          "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/venue-bucket/${venue.venueId}/${venue.images[0]}";
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        thumbnailUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: thumbnailUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: IColors.lightGrey,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: IColors.primary,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: IColors.lightGrey,
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: IColors.primary,
+                    size: 50,
+                  ),
+                ),
+              )
+            : Container(
+                color: IColors.lightGrey,
+                child: const Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    color: IColors.primary,
+                    size: 50,
+                  ),
+                ),
+              ),
+        // Gradient overlay for better text readability if needed
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black.withOpacity(0.2),
+              ],
+              stops: const [0.7, 1.0],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showVenueDetailsDialog(
       BuildContext context, VenueModel venue, bool isDark) {
     showDialog(
@@ -375,9 +399,9 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
       builder: (BuildContext context) {
         return Dialog(
           insetPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           backgroundColor: isDark ? IColors.dark : Colors.white,
           child: Column(
@@ -388,17 +412,26 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      venue.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
+                    Expanded(
+                      child: Text(
+                        venue.name,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: IColors.primary),
-                      onPressed: () => Navigator.pop(context),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: IColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: IColors.primary),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ),
                   ],
                 ),
@@ -414,6 +447,9 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                       enlargeCenterPage: false,
                       autoPlay: true,
                       enableInfiniteScroll: true,
+                      autoPlayInterval: const Duration(seconds: 4),
+                      autoPlayAnimationDuration:
+                          const Duration(milliseconds: 800),
                     ),
                     items: venue.images.map((imagePath) {
                       String imageUrl =
@@ -424,7 +460,7 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                             width: MediaQuery.of(context).size.width,
                             margin: const EdgeInsets.symmetric(horizontal: 5.0),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(16),
                               child: CachedNetworkImage(
                                 imageUrl: imageUrl,
                                 fit: BoxFit.cover,
@@ -456,12 +492,15 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                 Container(
                   height: 300,
                   width: double.infinity,
-                  color: IColors.lightGrey,
+                  decoration: BoxDecoration(
+                    color: IColors.lightGrey,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: const Center(
                     child: Icon(
                       Icons.image_not_supported,
                       color: IColors.primary,
-                      size: 50,
+                      size: 60,
                     ),
                   ),
                 ),
@@ -470,23 +509,32 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Description",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: IColors.primary,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: IColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Text(
+                        "About This Venue",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: IColors.primary,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
                       venue.description,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         color: isDark ? IColors.grey : IColors.darkGrey,
+                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -497,9 +545,10 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
                         backgroundColor: IColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        minimumSize: const Size(double.infinity, 50),
+                        minimumSize: const Size(double.infinity, 56),
+                        elevation: 0,
                       ),
                       child: const Text(
                         "Book This Venue",
@@ -524,26 +573,33 @@ class _VenueExplorationScreenState extends State<VenueExplorationScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Iconsax.building,
-            size: 64,
-            color: IColors.primary,
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: IColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Iconsax.building,
+              size: 64,
+              color: IColors.primary,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           const Text(
             "No venues found",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             searchTextController.text.isNotEmpty
                 ? "Try different search terms"
                 : "Please check back later",
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: IColors.darkerGrey,
             ),
           ),

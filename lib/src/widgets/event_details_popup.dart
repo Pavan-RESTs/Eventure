@@ -207,11 +207,19 @@ class EventDetailsPopup extends StatelessWidget {
                         _formatDateTime(event.start_timestamp),
                         isDark,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       _buildDetailRow(
                         context,
                         Iconsax.timer_pause,
                         _formatDateTime(event.end_timestamp),
+                        isDark,
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildDetailRow(
+                        context,
+                        Iconsax.heart5,
+                        "${event.likes} likes",
                         isDark,
                       ),
                       const SizedBox(height: 12),
@@ -221,16 +229,7 @@ class EventDetailsPopup extends StatelessWidget {
                         event.venue,
                         isDark,
                       ),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(
-                        context,
-                        Iconsax.heart,
-                        "${event.likes} likes",
-                        isDark,
-                      ),
-                      const SizedBox(height: 24),
 
-                      // Description header
                       Text(
                         "Description",
                         style: TextStyle(
@@ -253,7 +252,7 @@ class EventDetailsPopup extends StatelessWidget {
 
                       // Gallery images section
                       if (event.galleryImageUrls.isNotEmpty) ...[
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
                         Text(
                           "Gallery",
                           style: TextStyle(
