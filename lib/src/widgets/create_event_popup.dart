@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/core/constants/colors.dart';
 import 'package:eventure/core/helpers/device_utility.dart';
@@ -90,13 +92,13 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
-                ? ColorScheme.dark(
+                ? const ColorScheme.dark(
                     primary: IColors.primary,
                     onPrimary: Colors.white,
                     onSurface: Colors.white,
                     surface: IColors.dark,
                   )
-                : ColorScheme.light(
+                : const ColorScheme.light(
                     primary: IColors.primary,
                     onPrimary: Colors.white,
                     onSurface: Colors.black,
@@ -122,13 +124,13 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
           return Theme(
             data: Theme.of(context).copyWith(
               colorScheme: isDark
-                  ? ColorScheme.dark(
+                  ? const ColorScheme.dark(
                       primary: IColors.primary,
                       onPrimary: Colors.white,
                       onSurface: Colors.white,
                       surface: IColors.dark,
                     )
-                  : ColorScheme.light(
+                  : const ColorScheme.light(
                       primary: IColors.primary,
                       onPrimary: Colors.white,
                       onSurface: Colors.black,
@@ -185,13 +187,13 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
-                ? ColorScheme.dark(
+                ? const ColorScheme.dark(
                     primary: IColors.primary,
                     onPrimary: Colors.white,
                     onSurface: Colors.white,
                     surface: IColors.dark,
                   )
-                : ColorScheme.light(
+                : const ColorScheme.light(
                     primary: IColors.primary,
                     onPrimary: Colors.white,
                     onSurface: Colors.black,
@@ -218,13 +220,13 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
           return Theme(
             data: Theme.of(context).copyWith(
               colorScheme: isDark
-                  ? ColorScheme.dark(
+                  ? const ColorScheme.dark(
                       primary: IColors.primary,
                       onPrimary: Colors.white,
                       onSurface: Colors.white,
                       surface: IColors.dark,
                     )
-                  : ColorScheme.light(
+                  : const ColorScheme.light(
                       primary: IColors.primary,
                       onPrimary: Colors.white,
                       onSurface: Colors.black,
@@ -320,6 +322,17 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
                   const FileOptions(cacheControl: '3600', upsert: false),
             );
 
+        // Create a folder for gallery images by uploading a placeholder file
+        final galleryPlaceholderPath = "$eventId/gallery/.keep";
+        await Supabase.instance.client.storage
+            .from('event-bucket')
+            .uploadBinary(
+              galleryPlaceholderPath,
+              Uint8List.fromList([]), // Empty file content
+              fileOptions:
+                  const FileOptions(cacheControl: '3600', upsert: false),
+            );
+
 // Save Firestore document (include the full brochure path)
         await FirebaseFirestore.instance
             .collection('Event Table')
@@ -344,7 +357,6 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
         widget.onEventCreated();
         Navigator.of(context).pop();
       } catch (e) {
-        print('Error creating event: $e'); // Add detailed error logging
         IDeviceUtils.showSnackBar('Error', 'Failed to create event: $e');
       } finally {
         setState(() {
@@ -366,272 +378,298 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
         horizontal: screenWidth * 0.05,
         vertical: screenHeight * 0.03,
       ),
-      child: Container(
-        width: screenWidth * 0.9,
-        height: screenHeight * 0.85,
-        decoration: BoxDecoration(
-          color: isDark ? IColors.dark : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+      child: Stack(children: [
+        Opacity(
+          opacity: _isLoading ? 0.5 : 1,
+          child: Container(
+            width: screenWidth * 0.9,
+            height: screenHeight * 0.85,
+            decoration: BoxDecoration(
+              color: isDark ? IColors.dark : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.grey.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Center(
-                        child: Column(
-                          children: [
-                            Icon(
-                              Iconsax.calendar_add,
-                              size: 40,
-                              color: IColors.primary,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Create New Event',
-                              style: TextStyle(
-                                color: isDark ? Colors.white : Colors.black,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Fill in the details to create a new event',
-                              style: TextStyle(
-                                color: isDark ? IColors.grey : IColors.darkGrey,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        ),
-                      ),
-
-                      // Name field
-                      _buildLabel('Event Name'),
-                      _buildTextField(
-                        controller: _nameController,
-                        hintText: 'Enter event name',
-                        icon: Iconsax.note_text,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter event name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Description field
-                      _buildLabel('Description'),
-                      _buildTextField(
-                        controller: _descriptionController,
-                        hintText: 'Enter event description',
-                        icon: Iconsax.document_text,
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter event description';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Department dropdown
-                      _buildLabel('Department'),
-                      _buildDropdown(
-                        items: _departments,
-                        value: _selectedDepartmentId,
-                        hintText: 'Select department',
-                        icon: Iconsax.building,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedDepartmentId = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Venue dropdown
-                      _buildLabel('Venue'),
-                      _buildDropdown(
-                        items: _venues,
-                        value: _selectedVenueId,
-                        hintText: 'Select venue',
-                        icon: Iconsax.location,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedVenueId = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Date and time pickers
-                      Row(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
+                          // Header
+                          Center(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildLabel('Start Date & Time'),
-                                _buildDateTimePicker(
-                                  dateTime: _startDateTime,
-                                  onTap: () => _selectStartDateTime(context),
-                                  hintText: 'Select start',
-                                  icon: Iconsax.calendar,
+                                const Icon(
+                                  Iconsax.calendar_add,
+                                  size: 40,
+                                  color: IColors.primary,
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('End Date & Time'),
-                                _buildDateTimePicker(
-                                  dateTime: _endDateTime,
-                                  onTap: () => _selectEndDateTime(context),
-                                  hintText: 'Select end',
-                                  icon: Iconsax.calendar,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Brochure image picker
-                      _buildLabel('Brochure Image'),
-                      InkWell(
-                        onTap: _pickBrochureImage,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          height: 160,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color:
-                                isDark ? Colors.black12 : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: IColors.grey.withOpacity(0.5),
-                            ),
-                          ),
-                          child: _brochureImage != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(
-                                    _brochureImage!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Iconsax.image,
-                                      size: 48,
-                                      color: isDark
-                                          ? IColors.grey
-                                          : IColors.darkGrey,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Tap to select brochure image',
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? IColors.grey
-                                            : IColors.darkGrey,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Create button
-                      SizedBox(
-                        width: double.infinity,
-                        height: screenHeight * 0.07,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _createEvent,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: IColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: SpinKitThreeBounce(
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text(
-                                  'Create Event',
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Create New Event',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
+                                    color: isDark ? Colors.white : Colors.black,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Fill in the details to create a new event',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? IColors.grey
+                                        : IColors.darkGrey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
 
-            // Close button
-            Positioned(
-              top: 16,
-              right: 16,
-              child: InkWell(
-                onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: isDark ? Colors.white : Colors.black,
+                          // Name field
+                          _buildLabel('Event Name'),
+                          _buildTextField(
+                            controller: _nameController,
+                            hintText: 'Enter event name',
+                            icon: Iconsax.note_text,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter event name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Description field
+                          _buildLabel('Description'),
+                          _buildTextField(
+                            controller: _descriptionController,
+                            hintText: 'Enter event description',
+                            icon: Iconsax.document_text,
+                            maxLines: 3,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter event description';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Department dropdown
+                          _buildLabel('Department'),
+                          _buildDropdown(
+                            items: _departments,
+                            value: _selectedDepartmentId,
+                            hintText: 'Select department',
+                            icon: Iconsax.building,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedDepartmentId = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Venue dropdown
+                          _buildLabel('Venue'),
+                          _buildDropdown(
+                            items: _venues,
+                            value: _selectedVenueId,
+                            hintText: 'Select venue',
+                            icon: Iconsax.location,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedVenueId = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Date and time pickers
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('Start Date & Time'),
+                                    _buildDateTimePicker(
+                                      dateTime: _startDateTime,
+                                      onTap: () =>
+                                          _selectStartDateTime(context),
+                                      hintText: 'Select start',
+                                      icon: Iconsax.calendar,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('End Date & Time'),
+                                    _buildDateTimePicker(
+                                      dateTime: _endDateTime,
+                                      onTap: () => _selectEndDateTime(context),
+                                      hintText: 'Select end',
+                                      icon: Iconsax.calendar,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Brochure image picker
+                          _buildLabel('Brochure Image'),
+                          InkWell(
+                            onTap: _pickBrochureImage,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 160,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.black12
+                                    : Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: IColors.grey.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: _brochureImage != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.file(
+                                        _brochureImage!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Iconsax.image,
+                                          size: 48,
+                                          color: isDark
+                                              ? IColors.grey
+                                              : IColors.darkGrey,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Tap to select brochure image',
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? IColors.grey
+                                                : IColors.darkGrey,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Create button
+                          SizedBox(
+                              width: double.infinity,
+                              height: screenHeight * 0.07,
+                              child: ElevatedButton(
+                                onPressed: _createEvent,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: IColors.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 2,
+                                  shadowColor:
+                                      IColors.primary.withValues(alpha: 0.4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: const Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Iconsax.calendar_add,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Create Event',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+
+                // Close button
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        if (_isLoading) const SpinKitDualRing(color: IColors.primary),
+      ]),
     );
   }
 
@@ -719,56 +757,88 @@ class _CreateEventPopupState extends State<CreateEventPopup> {
     required Function(String?) onChanged,
   }) {
     final isDark = IDeviceUtils.isDarkMode(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black12 : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-        ),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        hint: Text(
-          hintText,
-          style: TextStyle(
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-          ),
-        ),
-        icon: const Icon(
-          Icons.arrow_drop_down,
+
+    // Extract just the names for the dropdown
+    final List<String> names =
+        items.map((item) => item['name'] as String).toList();
+
+    return Row(
+      children: [
+        Icon(
+          icon,
           color: IColors.primary,
+          size: 20,
         ),
-        dropdownColor: isDark ? IColors.dark : Colors.white,
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            icon,
-            color: IColors.primary,
-            size: 20,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 14,
-            horizontal: 16,
-          ),
-        ),
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black,
-          fontSize: 14,
-        ),
-        onChanged: onChanged,
-        items: items.map((item) {
-          return DropdownMenuItem<String>(
-            value: item['id'],
-            child: Text(
-              item['name'],
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
               ),
             ),
-          );
-        }).toList(),
-      ),
+            child: CustomDropdown<String>.search(
+              decoration: CustomDropdownDecoration(
+                expandedFillColor: isDark ? IColors.dark : Colors.white,
+                listItemDecoration: const ListItemDecoration(
+                  selectedColor: IColors.grey,
+                  splashColor: IColors.darkGrey,
+                  selectedIconShape: CircleBorder(
+                    side: BorderSide(color: IColors.primary),
+                  ),
+                ),
+                noResultFoundStyle: TextStyle(
+                    color: isDark ? Colors.white70 : IColors.textPrimary),
+                headerStyle:
+                    TextStyle(color: isDark ? Colors.white : Colors.black),
+                closedSuffixIcon: const Icon(
+                  Icons.arrow_drop_down,
+                  size: 24,
+                  color: IColors.primary,
+                ),
+                expandedSuffixIcon: const Icon(
+                  Icons.arrow_drop_up,
+                  size: 24,
+                  color: IColors.primary,
+                ),
+                closedFillColor: isDark ? Colors.black12 : Colors.grey.shade50,
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+                listItemStyle: TextStyle(
+                    color: isDark ? Colors.white : IColors.textPrimary),
+                searchFieldDecoration: SearchFieldDecoration(
+                  textStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54),
+                  hintStyle: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.black54),
+                  fillColor:
+                      isDark ? Colors.grey.shade800 : const Color(0xfff4f5f8),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ),
+              hintText: hintText,
+              items: names,
+              excludeSelected: true,
+              onChanged: (selectedName) {
+                if (selectedName != null) {
+                  // Find the corresponding ID from the original items list
+                  final selectedItem = items.firstWhere(
+                    (item) => item['name'] == selectedName,
+                    orElse: () => {'id': null, 'name': selectedName},
+                  );
+                  onChanged(selectedItem['id']);
+                }
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 

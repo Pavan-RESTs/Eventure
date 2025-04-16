@@ -23,6 +23,6 @@ class App extends StatelessWidget {
         theme: IAppTheme.lightTheme,
         darkTheme: IAppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: SplashScreen());
+        home: const SplashScreen());
   }
 }

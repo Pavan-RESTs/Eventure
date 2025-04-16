@@ -13,9 +13,9 @@ class BottomNavigationScreen extends StatefulWidget {
 
 class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   List<Widget> screens = [
-    EventManagementScreen(),
-    EventModificationPage(),
-    VenueManagementPage(),
+    const EventManagementScreen(),
+    const MyEventsScreen(),
+    const VenueExplorationScreen(),
   ];
 
   int currentIndex = 0; // Initialize currentIndex as a state variable

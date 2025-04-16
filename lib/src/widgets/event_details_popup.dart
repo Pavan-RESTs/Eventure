@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eventure/core/constants/colors.dart';
 import 'package:eventure/core/helpers/device_utility.dart';
 import 'package:eventure/src/data_repository/event_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 
@@ -62,7 +64,8 @@ class EventDetailsPopup extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.3),
+              color:
+                  isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.3),
               spreadRadius: 2,
               blurRadius: 10,
               offset: const Offset(0, 4),
@@ -85,22 +88,22 @@ class EventDetailsPopup extends StatelessWidget {
                         ? Container(
                             height: 180,
                             width: double.infinity,
-                            color: IColors.primary.withOpacity(0.2),
+                            color: IColors.primary.withValues(alpha: 0.2),
                             child: const Icon(
                               Iconsax.gallery,
                               size: 60,
                               color: IColors.primary,
                             ),
                           )
-                        : Image.network(
-                            imageUrl,
+                        : CachedNetworkImage(
+                            imageUrl: imageUrl,
                             height: 180,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
+                            errorWidget: (context, error, stackTrace) {
                               return Container(
                                 height: 180,
-                                color: IColors.primary.withOpacity(0.2),
+                                color: IColors.primary.withValues(alpha: 0.2),
                                 child: const Center(
                                   child: Icon(
                                     Iconsax.gallery_slash,
@@ -110,11 +113,11 @@ class EventDetailsPopup extends StatelessWidget {
                                 ),
                               );
                             },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
+                            progressIndicatorBuilder:
+                                (context, child, loadingProgress) {
                               return Container(
                                 height: 180,
-                                color: IColors.primary.withOpacity(0.1),
+                                color: IColors.primary.withValues(alpha: 0.1),
                                 child: const Center(
                                   child: CircularProgressIndicator(
                                     color: IColors.primary,
@@ -131,7 +134,7 @@ class EventDetailsPopup extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.black54
-                              : Colors.white.withOpacity(0.8),
+                              : Colors.white.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: IconButton(
@@ -200,15 +203,15 @@ class EventDetailsPopup extends StatelessWidget {
                       // Event details list
                       _buildDetailRow(
                         context,
-                        Iconsax.calendar,
-                        "Starts: ${_formatDateTime(event.start_timestamp)}",
+                        Iconsax.timer_start,
+                        _formatDateTime(event.start_timestamp),
                         isDark,
                       ),
                       const SizedBox(height: 8),
                       _buildDetailRow(
                         context,
-                        Iconsax.timer_1,
-                        "Ends: ${_formatDateTime(event.end_timestamp)}",
+                        Iconsax.timer_pause,
+                        _formatDateTime(event.end_timestamp),
                         isDark,
                       ),
                       const SizedBox(height: 12),
@@ -311,31 +314,37 @@ class EventDetailsPopup extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _buildGalleryPreview(List<dynamic> galleryUrls, bool isDark) {
-    // This is a simple horizontal gallery preview
-    // You can expand this to show thumbnails and make them clickable to show full screen images
-    return SizedBox(
-      height: 120,
-      child: galleryUrls is List<String> && galleryUrls.isNotEmpty
-          ? ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: galleryUrls.length > 5 ? 5 : galleryUrls.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+Widget _buildGalleryPreview(List<dynamic> galleryUrls, bool isDark) {
+  return SizedBox(
+    height: 120,
+    child: galleryUrls.isNotEmpty
+        ? ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: galleryUrls.length > 5 ? 5 : galleryUrls.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: GestureDetector(
+                  onTap: () {
+                    // Show image in a dialog with carousel capability
+                    _showImageCarouselDialog(
+                        context, galleryUrls, index, isDark);
+                  },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      galleryUrls[index],
+                    child: CachedNetworkImage(
+                      imageUrl:
+                          "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/event-bucket/${galleryUrls[index].toString()}",
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
+                      errorWidget: (context, error, stackTrace) {
                         return Container(
                           width: 120,
                           height: 120,
-                          color: IColors.primary.withOpacity(0.2),
+                          color: IColors.primary.withValues(alpha: 0.2),
                           child: const Center(
                             child: Icon(
                               Iconsax.gallery_slash,
@@ -346,27 +355,241 @@ class EventDetailsPopup extends StatelessWidget {
                       },
                     ),
                   ),
-                );
-              },
-            )
-          : Container(
-              width: double.infinity,
-              height: 100,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? IColors.primary.withOpacity(0.1)
-                    : IColors.grey.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: Text(
-                  "No gallery images available",
-                  style: TextStyle(
-                    color: IColors.white,
-                  ),
+                ),
+              );
+            },
+          )
+        : Container(
+            width: double.infinity,
+            height: 100,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? IColors.primary.withValues(alpha: 0.1)
+                  : IColors.grey.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Text(
+                "No gallery images available",
+                style: TextStyle(
+                  color: IColors.primary,
                 ),
               ),
             ),
+          ),
+  );
+}
+
+// Function to show image carousel dialog
+void _showImageCarouselDialog(BuildContext context, List<dynamic> galleryUrls,
+    int initialIndex, bool isDark) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return ImageCarouselDialog(
+        galleryUrls: galleryUrls,
+        initialIndex: initialIndex,
+        isDark: isDark,
+      );
+    },
+  );
+}
+
+class ImageCarouselDialog extends StatefulWidget {
+  final List<dynamic> galleryUrls;
+  final int initialIndex;
+  final bool isDark;
+
+  const ImageCarouselDialog({
+    Key? key,
+    required this.galleryUrls,
+    required this.initialIndex,
+    required this.isDark,
+  }) : super(key: key);
+
+  @override
+  State<ImageCarouselDialog> createState() => _ImageCarouselDialogState();
+}
+
+class _ImageCarouselDialogState extends State<ImageCarouselDialog> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(
+      initialPage: widget.initialIndex,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final backgroundColor = widget.isDark
+        ? Colors.black.withValues(alpha: 0.9)
+        : Colors.white.withValues(alpha: 0.95);
+    final textColor = widget.isDark ? IColors.white : IColors.textPrimary;
+    final secondaryColor = widget.isDark ? Colors.white70 : Colors.black54;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top bar with counter and close button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Image counter
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: IColors.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${_currentIndex + 1}/${widget.galleryUrls.length}",
+                    style: const TextStyle(
+                      color: IColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                // Close button
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: widget.isDark
+                          ? Colors.white12
+                          : Colors.black.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Iconsax.close_circle,
+                      color: secondaryColor,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Main container for carousel
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: size.width,
+              maxHeight: size.height * 0.7,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(16)),
+            ),
+            child: Stack(
+              children: [
+                // PageView for swiping images
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.galleryUrls.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/event-bucket/${widget.galleryUrls[index].toString()}",
+                          fit: BoxFit.contain,
+                          progressIndicatorBuilder:
+                              (context, child, loadingProgress) {
+                            return SizedBox(
+                              width: size.width * 0.8,
+                              height: size.width * 0.8,
+                              child: const Center(
+                                child: SpinKitWaveSpinner(
+                                  size: 60,
+                                  waveColor: Colors.lightBlueAccent,
+                                  color: IColors.primary,
+                                ),
+                              ),
+                            );
+                          },
+                          errorWidget: (context, error, stackTrace) {
+                            return Container(
+                              width: size.width * 0.8,
+                              height: size.width * 0.8,
+                              color: IColors.primary.withValues(alpha: 0.1),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Iconsax.gallery_slash,
+                                    color: IColors.primary,
+                                    size: 48,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "Failed to load image",
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      setState(
+                                          () {}); // Trigger rebuild to retry
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: IColors.primary,
+                                      foregroundColor: IColors.grey,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text("Retry"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

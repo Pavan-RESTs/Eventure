@@ -26,7 +26,6 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = IDeviceUtils.isDarkMode(context);
-    final double screenHeight = IDeviceUtils.getScreenHeight(context);
     final double screenWidth = IDeviceUtils.getScreenWidth(context);
 
     return Scaffold(
@@ -35,12 +34,13 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
           showCreateEventPopup(context);
         },
         backgroundColor: IColors.primary,
-        child: Icon(
+        child: const Icon(
           Iconsax.calendar_add,
           color: IColors.grey,
         ),
       ),
       appBar: CustomAppBar(
+        title: "Event Management",
         isDark: isDark,
         onRefreshPressed: () {
           setState(() {});
@@ -152,59 +152,54 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
                 closeKeyboardWhenScrolling: true,
                 // In your itemBuilder within EventManagementScreen:
                 itemBuilder: (event) {
-                  return FutureBuilder<String>(
-                    future: ICloudHelperFunctions.getPublicBrochureUrl(
-                        event.brochureImageUrl),
-                    builder: (context, imageSnapshot) {
-                      return FutureBuilder<String?>(
-                        future: ICloudHelperFunctions.getUserId(),
-                        builder: (context, userIdSnapshot) {
-                          return FutureBuilder<bool>(
-                            future: ICloudHelperFunctions.hasUserLikedEvent(
-                                userIdSnapshot.data ?? '', event.event_id),
-                            builder: (context, likeSnapshot) {
-                              return EventCard(
-                                imageUrl: imageSnapshot.data ?? '',
-                                title: event.name,
-                                description: event.description,
-                                likeCount: event.likes,
-                                location: event.venue,
-                                status: event.status,
-                                isLiked: likeSnapshot.data ?? false,
-                                eventId: event.event_id,
-                                onViewDetails: () {
-                                  showEventDetailsPopup(
-                                      context, event, imageSnapshot.data ?? '');
-                                },
-                                onLikeToggled: (isLiked) async {
-                                  try {
-                                    final userId = userIdSnapshot.data;
-                                    if (userId == null) return;
+                  return FutureBuilder<String?>(
+                    future: ICloudHelperFunctions.getUserId(),
+                    builder: (context, userIdSnapshot) {
+                      return FutureBuilder<bool>(
+                        future: ICloudHelperFunctions.hasUserLikedEvent(
+                            userIdSnapshot.data ?? '', event.event_id),
+                        builder: (context, likeSnapshot) {
+                          return EventCard(
+                            imageUrl:
+                                "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/event-bucket/${event.brochureImageUrl}",
+                            title: event.name,
+                            description: event.description,
+                            likeCount: event.likes,
+                            location: event.venue,
+                            status: event.status,
+                            isLiked: likeSnapshot.data ?? false,
+                            eventId: event.event_id,
+                            startDateTime: event.start_timestamp,
+                            endDateTime: event.end_timestamp,
+                            onViewDetails: () {
+                              showEventDetailsPopup(context, event,
+                                  "https://bnpdmwasofqiztyiwewo.supabase.co/storage/v1/object/public/event-bucket/${event.brochureImageUrl}");
+                            },
+                            onLikeToggled: (isLiked) async {
+                              try {
+                                final userId = userIdSnapshot.data;
+                                if (userId == null) return;
 
-                                    final userRef = FirebaseFirestore.instance
-                                        .collection('User Table')
-                                        .doc(userId);
+                                final userRef = FirebaseFirestore.instance
+                                    .collection('User Table')
+                                    .doc(userId);
 
-                                    if (isLiked) {
-                                      ICloudHelperFunctions.updateEventLikes(
-                                          event.event_id, true);
-                                      await userRef.update({
-                                        'liked_events': FieldValue.arrayUnion(
-                                            [event.event_id])
-                                      });
-                                    } else {
-                                      ICloudHelperFunctions.updateEventLikes(
-                                          event.event_id, false);
-                                      await userRef.update({
-                                        'liked_events': FieldValue.arrayRemove(
-                                            [event.event_id])
-                                      });
-                                    }
-                                  } catch (e) {
-                                    throw e; // This will trigger the error handling in EventCard
-                                  }
-                                },
-                              );
+                                if (isLiked) {
+                                  ICloudHelperFunctions.updateEventLikes(
+                                      event.event_id, true);
+                                  await userRef.update({
+                                    'liked_events':
+                                        FieldValue.arrayUnion([event.event_id])
+                                  });
+                                } else {
+                                  ICloudHelperFunctions.updateEventLikes(
+                                      event.event_id, false);
+                                  await userRef.update({
+                                    'liked_events':
+                                        FieldValue.arrayRemove([event.event_id])
+                                  });
+                                }
+                              } catch (e) {}
                             },
                           );
                         },

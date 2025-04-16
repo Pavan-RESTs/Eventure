@@ -12,6 +12,7 @@ class EventModel {
   DateTime start_timestamp;
   DateTime end_timestamp;
   String status;
+  String statusHelper;
   String user = '';
   String department = '';
   String venue = '';
@@ -30,8 +31,13 @@ class EventModel {
       required this.start_timestamp,
       required this.end_timestamp,
       required this.brochureImageUrl,
+      required this.statusHelper,
       required this.galleryImageUrls})
-      : status = _determineStatus(start_timestamp, end_timestamp);
+      : status = _determineStatus(
+          start_timestamp,
+          end_timestamp,
+          statusHelper == 'cancelled' ? true : false,
+        );
 
   factory EventModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -49,10 +55,12 @@ class EventModel {
       end_timestamp: (data['end_timestamp'] as Timestamp).toDate(),
       brochureImageUrl: data['brochureImageUrl'] ?? '',
       galleryImageUrls: data['galleryImageFolderUrl'] ?? '',
+      statusHelper: data['status'] ?? '',
     );
   }
 
-  static String _determineStatus(DateTime start, DateTime end) {
+  static String _determineStatus(DateTime start, DateTime end, bool cancelled) {
+    if (cancelled) return 'cancelled';
     final now = DateTime.now();
     if (now.isBefore(start)) {
       return 'upcoming';
@@ -88,8 +96,6 @@ class EventModel {
       if (venueDoc.exists) {
         venue = venueDoc['name'] ?? 'Unknown Venue';
       }
-    } catch (e) {
-      print('Error fetching additional data: $e');
-    }
+    } catch (e) {}
   }
 }

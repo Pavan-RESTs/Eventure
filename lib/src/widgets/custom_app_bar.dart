@@ -8,10 +8,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.isDark,
     required this.onRefreshPressed,
+    required this.title,
   });
 
   final bool isDark;
   final VoidCallback onRefreshPressed;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +24,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         elevation: 0,
         scrolledUnderElevation: 2.0,
         shadowColor: isDark
-            ? Colors.black.withOpacity(0.3)
-            : IColors.primary.withOpacity(0.1),
+            ? Colors.black.withValues(alpha: 0.3)
+            : IColors.primary.withValues(alpha: 0.1),
         titleSpacing: 0,
         leadingWidth: 60,
         leading: Container(
@@ -37,7 +39,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         title: Text(
-          "    Event Management",
+          "    $title",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,

@@ -33,7 +33,7 @@ class CustomBottomNavBar extends StatelessWidget {
             size: screenWidth * 0.07,
           ),
           title: Text(
-            "Events",
+            "Explore",
             style: TextStyle(
               color: isDark ? Colors.white70 : IColors.dark,
               fontSize: screenWidth * 0.04,

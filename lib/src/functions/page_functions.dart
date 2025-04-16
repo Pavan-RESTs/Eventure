@@ -31,7 +31,7 @@ class InputPageFunctions {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
@@ -42,7 +42,7 @@ class InputPageFunctions {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: theme.primaryColor.withOpacity(0.1),
+                        color: theme.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -111,7 +111,7 @@ class InputPageFunctions {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white70,
                       ),
-                      child: Text(
+                      child: const Text(
                         'Cancel',
                         style: TextStyle(
                           fontSize: 13,
@@ -121,18 +121,18 @@ class InputPageFunctions {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Container(
+                    SizedBox(
                       width: 70,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () async {
                           await Supabase.instance.client.auth.signOut();
-                          Get.offAll(LoginScreen());
+                          Get.offAll(const LoginScreen());
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.primaryColor,
                         ),
-                        child: Text(
+                        child: const Text(
                           'Logout',
                           style: TextStyle(
                             fontSize: 13,

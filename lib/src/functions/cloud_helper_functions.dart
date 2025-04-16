@@ -19,7 +19,7 @@ class ICloudHelperFunctions {
 
       IDeviceUtils.showSnackBar("Success", "Login Successful");
 
-      Get.offAll(BottomNavigationScreen());
+      Get.offAll(const BottomNavigationScreen());
       return response;
     } on AuthException catch (e) {
       IDeviceUtils.showSnackBar("Error", e.message);
@@ -42,21 +42,11 @@ class ICloudHelperFunctions {
           final event = EventModel.fromFirestore(doc);
           await event.initializeAdditionalData();
           events.add(event);
-          print("Loaded event: ${event.name}");
-        } catch (e) {
-          print("❌ Error creating EventModel: $e");
-        }
+        } catch (e) {}
       }
 
       return events;
     });
-  }
-
-  static Future<String> getPublicBrochureUrl(String path) async {
-    final String publicUrl = Supabase.instance.client.storage
-        .from('event-bucket')
-        .getPublicUrl(path);
-    return publicUrl;
   }
 
   static Future<String?> getUserId() async {
@@ -66,7 +56,6 @@ class ICloudHelperFunctions {
 
       return user.id;
     } catch (e) {
-      print('Error getting Supabase user ID: $e');
       return null;
     }
   }
@@ -78,27 +67,19 @@ class ICloudHelperFunctions {
           .doc(userId)
           .get();
 
-      print("UserDoc Exists: ${userDoc.exists}");
-      print("User Data: ${userDoc.data()}");
-
       if (!userDoc.exists) return false;
 
       final likedEventsRaw = userDoc.data()?['liked_events'];
-      print("Raw liked_events: $likedEventsRaw");
 
       final likedEvents = List<String>.from(likedEventsRaw ?? []);
-      print("Parsed liked_events: $likedEvents");
-      print("Checking if likedEvents contains eventId: '$eventId'");
       for (var id in likedEvents) {
         if (id == eventId) {
-          print("YUess");
           return true;
         }
       }
 
       return false;
     } catch (e) {
-      print('Error checking liked event: $e');
       return false;
     }
   }
@@ -121,7 +102,6 @@ class ICloudHelperFunctions {
       // Get current like count to prevent negative values
       final currentLikes = (doc.data()?['likes'] as int?) ?? 0;
       if (!increment && currentLikes <= 0) {
-        print('Like count already at minimum (0)');
         return;
       }
 
@@ -129,14 +109,9 @@ class ICloudHelperFunctions {
       await eventRef.update({
         'likes': increment ? FieldValue.increment(1) : FieldValue.increment(-1)
       });
-
-      print(
-          'Successfully ${increment ? 'incremented' : 'decremented'} likes for event $eventId');
     } on FirebaseException catch (e) {
-      print('Firestore error updating likes: ${e.code} - ${e.message}');
       throw Exception('Failed to update likes: ${e.message}');
     } catch (e) {
-      print('Unexpected error updating likes: $e');
       throw Exception('Failed to update likes: $e');
     }
   }

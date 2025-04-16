@@ -68,10 +68,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (user != null) {
       // Already logged in
-      Get.offAll(() => BottomNavigationScreen());
+      Get.offAll(() => const BottomNavigationScreen());
     } else {
       // Not logged in
-      Get.offAll(() => LoginScreen());
+      Get.offAll(() => const LoginScreen());
     }
   }
 
@@ -88,20 +88,16 @@ class _SplashScreenState extends State<SplashScreen>
             ScaleTransition(
               scale: _logoAnimation,
               child: Container(
-                width: 160,
-                height: 160,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+                    color: IDeviceUtils.isDarkMode(context)
+                        ? IColors.light
+                        : Colors.black12,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: IDeviceUtils.isDarkMode(context)
+                            ? IColors.light
+                            : IColors.dark)),
                 child: Image.asset(
                   'assets/images/logo.png', // Replace with your logo asset
                   // If you don't have a logo asset, use a placeholder icon
@@ -122,22 +118,26 @@ class _SplashScreenState extends State<SplashScreen>
                   begin: const Offset(0, 0.5),
                   end: Offset.zero,
                 ).animate(_textAnimation),
-                child: const Column(
+                child: Column(
                   children: [
                     Text(
-                      'EVENTURE',
+                      'Eventure',
                       style: TextStyle(
-                        color: IColors.primary,
+                        color: IDeviceUtils.isDarkMode(context)
+                            ? Colors.white
+                            : IColors.black,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2.0,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Your Journey to Great Events',
                       style: TextStyle(
-                        color: IColors.primary,
+                        color: IDeviceUtils.isDarkMode(context)
+                            ? Colors.white
+                            : IColors.black,
                         fontSize: 16,
                         letterSpacing: 0.5,
                       ),

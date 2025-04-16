@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: screenWidth * 0.35,
                       height: screenWidth * 0.35,
                       decoration: BoxDecoration(
-                        color: IColors.primary.withOpacity(0.1),
+                        color: IColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (_isLoading)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: const Center(
                   child: SpinKitWaveSpinner(
                     size: 90,

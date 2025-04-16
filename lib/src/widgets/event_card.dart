@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eventure/core/constants/colors.dart';
 import 'package:eventure/core/helpers/device_utility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:intl/intl.dart'; // Add this import for date formatting
 
 class EventCard extends StatefulWidget {
   final String imageUrl;
@@ -13,6 +15,8 @@ class EventCard extends StatefulWidget {
   final bool isLiked;
   final int likeCount;
   final String eventId;
+  final DateTime startDateTime; // Added start date time
+  final DateTime endDateTime; // Added end date time
   final VoidCallback onViewDetails;
   final Function(bool) onLikeToggled;
 
@@ -27,6 +31,8 @@ class EventCard extends StatefulWidget {
     required this.isLiked,
     required this.likeCount,
     required this.eventId,
+    required this.startDateTime, // Required parameter
+    required this.endDateTime, // Required parameter
     required this.onLikeToggled,
   }) : super(key: key);
 
@@ -55,6 +61,21 @@ class _EventCardState extends State<EventCard> {
         _isLiked = widget.isLiked;
         _likeCount = widget.likeCount;
       });
+    }
+  }
+
+  // Format the date and time according to the requirements
+  String _formatDateTime() {
+    final startDate = DateFormat('MMM d, yyyy').format(widget.startDateTime);
+    final endDate = DateFormat('MMM d, yyyy').format(widget.endDateTime);
+    final startTime = DateFormat('h:mm a').format(widget.startDateTime);
+    final endTime = DateFormat('h:mm a').format(widget.endDateTime);
+
+    // Check if the event is on the same day
+    if (startDate == endDate) {
+      return '$startDate · $startTime - $endTime';
+    } else {
+      return '$startDate $startTime - $endDate $endTime';
     }
   }
 
@@ -90,12 +111,11 @@ class _EventCardState extends State<EventCard> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = IDeviceUtils.getScreenWidth(context);
-    final screenHeight = IDeviceUtils.getScreenHeight(context);
     final contentPadding = screenWidth * 0.03;
 
     return Container(
       width: screenWidth * 0.9,
-      height: screenHeight * 0.255,
+      // Height is removed to allow content to determine container size
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: isDarkMode ? IColors.darkContainer : Colors.white,
@@ -103,15 +123,15 @@ class _EventCardState extends State<EventCard> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
           color: isDarkMode
-              ? IColors.primary.withOpacity(0.2)
+              ? IColors.primary.withValues(alpha: 0.2)
               : IColors.borderSecondary,
           width: 1,
         ),
@@ -120,8 +140,10 @@ class _EventCardState extends State<EventCard> {
         padding: EdgeInsets.all(contentPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize:
+              MainAxisSize.min, // Let column take minimum space needed
           children: [
-            // Image and details row (unchanged)
+            // Image and details row
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -133,27 +155,27 @@ class _EventCardState extends State<EventCard> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDarkMode
-                          ? IColors.primary.withOpacity(0.3)
-                          : IColors.accent.withOpacity(0.5),
+                          ? IColors.primary.withValues(alpha: 0.3)
+                          : IColors.accent.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(11),
-                    child: Image.network(
-                      widget.imageUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: IColors.accent.withOpacity(0.2),
+                      errorWidget: (context, error, stackTrace) => Container(
+                        color: IColors.accent.withValues(alpha: 0.2),
                         child: const Center(
                           child: Icon(Icons.image_not_supported,
                               color: IColors.primary),
                         ),
                       ),
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
+                      progressIndicatorBuilder:
+                          (context, child, loadingProgress) {
                         return Container(
-                          color: IColors.accent.withOpacity(0.2),
+                          color: IColors.accent.withValues(alpha: 0.2),
                           child: const Center(
                             child: SpinKitRotatingCircle(
                               color: IColors.primary,
@@ -165,12 +187,12 @@ class _EventCardState extends State<EventCard> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Text content (unchanged)
+                // Text content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title and status (unchanged)
+                      // Title and status
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -195,12 +217,12 @@ class _EventCardState extends State<EventCard> {
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: _getStatusColor(widget.status, isDarkMode)
-                                  .withOpacity(isDarkMode ? 0.2 : 0.1),
+                                  .withValues(alpha: isDarkMode ? 0.2 : 0.1),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color:
                                     _getStatusColor(widget.status, isDarkMode)
-                                        .withOpacity(0.5),
+                                        .withValues(alpha: 0.5),
                                 width: 1,
                               ),
                             ),
@@ -216,24 +238,26 @@ class _EventCardState extends State<EventCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      // Description (unchanged)
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      // Description
                       Text(
                         widget.description,
                         style: TextStyle(
                           fontSize: 14,
                           color: isDarkMode
-                              ? IColors.textWhite.withOpacity(0.8)
+                              ? IColors.textWhite.withValues(alpha: 0.8)
                               : IColors.textSecondary,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      // Location (unchanged)
+                      // Location
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.place_outlined,
                             size: 16,
                             color: IColors.primary,
@@ -245,7 +269,33 @@ class _EventCardState extends State<EventCard> {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDarkMode
-                                    ? IColors.textWhite.withOpacity(0.7)
+                                    ? IColors.textWhite.withValues(alpha: 0.7)
+                                    : IColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // ADDED: Date and Time display
+                      Row(
+                        children: [
+                          const Icon(
+                            Iconsax.calendar,
+                            size: 16,
+                            color: IColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              _formatDateTime(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isDarkMode
+                                    ? IColors.textWhite.withValues(alpha: 0.7)
                                     : IColors.textSecondary,
                               ),
                               maxLines: 1,
@@ -261,7 +311,7 @@ class _EventCardState extends State<EventCard> {
             ),
             const SizedBox(height: 12),
             const Divider(),
-            // Action buttons - UPDATED FOR LIKE COUNT
+            // Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -294,13 +344,13 @@ class _EventCardState extends State<EventCard> {
                       style: TextStyle(
                         fontSize: 16,
                         color: isDarkMode
-                            ? IColors.textWhite.withOpacity(0.7)
+                            ? IColors.textWhite.withValues(alpha: 0.7)
                             : IColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-                // Share button (unchanged)
+                // Share button
                 Row(
                   children: [
                     IconButton(
@@ -316,34 +366,34 @@ class _EventCardState extends State<EventCard> {
                     const Text("Share", style: TextStyle(fontSize: 16)),
                   ],
                 ),
-                // Details button (unchanged)
+                // Details button
                 ElevatedButton(
                   onPressed: widget.onViewDetails,
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      IColors.primary.withOpacity(0.1),
+                    backgroundColor: WidgetStateProperty.all<Color>(
+                      IColors.primary.withValues(alpha: 0.1),
                     ),
                     foregroundColor:
-                        MaterialStateProperty.all<Color>(IColors.primary),
-                    elevation: MaterialStateProperty.all<double>(0),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        WidgetStateProperty.all<Color>(IColors.primary),
+                    elevation: WidgetStateProperty.all<double>(0),
+                    padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: BorderSide(
-                          color: IColors.primary.withOpacity(0.5),
+                          color: IColors.primary.withValues(alpha: 0.5),
                           width: 1,
                         ),
                       ),
                     ),
-                    overlayColor: MaterialStateProperty.resolveWith<Color>(
-                      (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.pressed)) {
-                          return IColors.primary.withOpacity(0.2);
+                    overlayColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return IColors.primary.withValues(alpha: 0.2);
                         }
-                        return IColors.primary.withOpacity(0.1);
+                        return IColors.primary.withValues(alpha: 0.1);
                       },
                     ),
                   ),

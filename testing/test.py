@@ -26,4 +26,3 @@ event_data = {
 # Insert the document with a specific ID (so doc.id == event_id)
 db.collection("Event Table").document(event_id).set(event_data)
 
-print(f"✅ Test event '{event_id}' inserted successfully.")

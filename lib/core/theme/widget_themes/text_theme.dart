@@ -27,13 +27,13 @@ class ITextTheme {
     bodySmall: const TextStyle().copyWith(
         fontSize: 14.0,
         fontWeight: FontWeight.w500,
-        color: IColors.dark.withOpacity(0.5)),
+        color: IColors.dark.withValues(alpha:0.5)),
     labelLarge: const TextStyle().copyWith(
         fontSize: 12.0, fontWeight: FontWeight.normal, color: IColors.dark),
     labelMedium: const TextStyle().copyWith(
         fontSize: 12.0,
         fontWeight: FontWeight.normal,
-        color: IColors.dark.withOpacity(0.5)),
+        color: IColors.dark.withValues(alpha:0.5)),
   );
 
   /// Customizable Dark Text Theme
@@ -57,12 +57,12 @@ class ITextTheme {
     bodySmall: const TextStyle().copyWith(
         fontSize: 14.0,
         fontWeight: FontWeight.w500,
-        color: IColors.light.withOpacity(0.5)),
+        color: IColors.light.withValues(alpha:0.5)),
     labelLarge: const TextStyle().copyWith(
         fontSize: 12.0, fontWeight: FontWeight.normal, color: IColors.light),
     labelMedium: const TextStyle().copyWith(
         fontSize: 12.0,
         fontWeight: FontWeight.normal,
-        color: IColors.light.withOpacity(0.5)),
+        color: IColors.light.withValues(alpha:0.5)),
   );
 }
